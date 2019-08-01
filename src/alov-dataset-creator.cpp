@@ -33,9 +33,14 @@ std::vector<int> movieid;
 cv::Mat frame;
 int currframe;
 
+int firstframe = 0;
+int lastframe = -1;
+
 std::string videoname = "";
 std::string framesdir = "";
 std::string outputdir = "";
+
+int waitkeyduration = 1;
 
 bool fileAccessible(std::string filename)
 {
@@ -70,6 +75,40 @@ int getFiles(std::string directory,
         closedir(dp);
     }
     else return -ENOENT;
+    return 0;
+}
+
+int saveVideo()
+{
+    for (int i = firstframe; i < lastframe; i++)
+    {
+        if (staged[i].x1_ == 0 && staged[i].x2_ == 0 && staged[i].y1_ == 0 && staged[i].y2_ == 0)
+        {
+            printf("Not all frames within range are staged\n");
+            return 1;
+        }
+    }
+    std::ofstream annotations(outputdir + "annotations.ann");
+    int count = 1;
+    for (int i = firstframe; i < lastframe; i++)
+    {
+        annotations << count << " "
+            << staged[i].x1_ << " " << staged[i].y1_ << " "
+            << staged[i].x2_ << " " << staged[i].y1_ << " "
+            << staged[i].x1_ << " " << staged[i].y2_ << " "
+            << staged[i].x2_ << " " << staged[i].y2_ << std::endl;
+        std::ostringstream path;
+        path << outputdir;
+        path << std::setfill('0') << std::setw(8) << count;
+        path << ".jpg";
+        cv::Mat tosave = cv::imread(frames[currframe]);
+        cv::imwrite(path.str(), tosave);
+        count++;
+    }
+    annotations.close();
+    std::ofstream beginend(outputdir + "beginend.txt");
+    beginend << firstframe << " " <<lastframe << std::endl;
+    beginend.close();
     return 0;
 }
 
@@ -158,7 +197,10 @@ bool keyboardControl(int key)
         break;
     case 50: // 2 - reset single
         if (paused)
+        {
             unstaged[currframe] = staged[currframe];
+            tracker->Init(frame, staged[currframe], regressor);
+        }
         break;
     case 114: // R - set all unstaged to stage (reset)
         if (paused)
@@ -167,7 +209,26 @@ bool keyboardControl(int key)
             {
                 unstaged[i] = staged[i];
             }
+            tracker->Init(frame, staged[currframe], regressor);
         }
+        break;
+    case 115: // S - save the annotations
+        saveVideo();
+        break;
+    case 40: // ( - set frame as the beginning
+        if (currframe != lastframe) firstframe = currframe;
+        break;
+    case 41: // ) - set frame as the ending
+        if (currframe != firstframe) lastframe = currframe;
+        break;
+    case 43: // + - speed up two times (up to 1x speed)
+        if (waitkeyduration > 1) waitkeyduration /= 2;
+        printf("Time for frame:  %dms\n", waitkeyduration);
+        break;
+    case 45: // - - slow down two times
+        waitkeyduration *= 2;
+        printf("Time for frame:  %dms\n", waitkeyduration);
+        break;
     }
     return true;
 }
@@ -185,6 +246,8 @@ int main(int argc, char *argv[])
         ("input-video", "Input video to extract labels from", cxxopts::value(videoname))
         ("frames-directory", "The directory containing frames from input video", cxxopts::value(framesdir))
         ("output-directory", "The directory containing labeled frames and annotations", cxxopts::value(outputdir))
+        ("first-frame", "The id of the first frame (0-based)", cxxopts::value(firstframe))
+        ("last-frame", "The id of the last frame (0-based)", cxxopts::value(lastframe))
         ("h,help", "Prints help for the application")
     ;
 
@@ -204,6 +267,7 @@ int main(int argc, char *argv[])
     }
 
     if (framesdir[framesdir.size() - 1] != '/') framesdir += "/";
+    if (outputdir[outputdir.size() - 1] != '/') framesdir += "/";
 
     printf("Starting program...\n");
 
@@ -280,6 +344,8 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (lastframe == -1) lastframe = frames.size();
+
     caffe::Caffe::SetDevice(0);
     caffe::Caffe::set_mode(caffe::Caffe::GPU);
     printf("Set GPU Caffe mode\n");
@@ -302,6 +368,9 @@ int main(int argc, char *argv[])
     printf("%s %d %d\n", frames[currframe].c_str(), frame.rows, frame.cols);
     canvas = cv::Mat3b(frame.rows, frame.cols, cv::Vec3b(0,0,0));
     frame.copyTo(canvas);
+
+    BoundingBox fullframe({0, 0, 1024, 576});
+
     while (true)
     {
         frame = cv::imread(frames[currframe]);
@@ -323,8 +392,12 @@ int main(int argc, char *argv[])
         }
         unstaged[currframe].Draw(255,0,0,&canvas);
         staged[currframe].Draw(255,255,255,&canvas);
+
+        if (firstframe == currframe) fullframe.Draw(0,255,0,&canvas);
+        if (lastframe == currframe) fullframe.Draw(0,0,255,&canvas);
+
         cv::imshow("Frame", canvas);
-        if (!keyboardControl(cv::waitKey(1))) break;
+        if (!keyboardControl(cv::waitKey(waitkeyduration))) break;
     }
     delete tracker;
     delete regressor;
