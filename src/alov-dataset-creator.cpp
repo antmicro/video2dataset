@@ -104,7 +104,7 @@ int saveVideo()
         path << outputdir;
         path << std::setfill('0') << std::setw(8) << count;
         path << ".jpg";
-        cv::Mat tosave = cv::imread(frames[currframe]);
+        cv::Mat tosave = cv::imread(frames[i]);
         cv::imwrite(path.str(), tosave);
         count++;
     }
