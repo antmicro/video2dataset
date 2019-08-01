@@ -245,7 +245,7 @@ bool keyboardControl(int key)
     case 107: // K - move forward
         if (paused)
         {
-            if (currframe < frames.size()) currframe++;
+            if (currframe < frames.size() - 1) currframe++;
             nextframe = true;
         }
         break;
