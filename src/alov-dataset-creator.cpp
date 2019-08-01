@@ -309,6 +309,12 @@ bool keyboardControl(int key)
         toggletracking = !toggletracking;
         printf("Tracking turned %s\n", toggletracking ? "on" : "off");
         break;
+    case 38: // & - move to first frame
+        currframe = firstframe;
+        break;
+    case 42: // * - move to last frame
+        currframe = lastframe;
+        break;
     }
     return true;
 }
@@ -351,15 +357,6 @@ int main(int argc, char *argv[])
 
     if (framesdir[framesdir.size() - 1] != '/') framesdir += "/";
     if (outputdir[outputdir.size() - 1] != '/') framesdir += "/";
-
-    if (inputannotations != "")
-    {
-        if (loadAnnotations(inputannotations) != 0)
-        {
-            printf("Error loading annotations file\n");
-            return 1;
-        }
-    }
 
     printf("Starting program...\n");
 
@@ -447,6 +444,16 @@ int main(int argc, char *argv[])
     toogleplay = true;
     selected = false;
 
+    if (inputannotations != "")
+    {
+        if (loadAnnotations(inputannotations) != 0)
+        {
+            printf("Error loading annotations file\n");
+            return 1;
+        }
+    }
+    printf("Sucessfully loaded annotations\n");
+
     currframe = 0;
 
     cv::namedWindow("Frame", cv::WINDOW_NORMAL);
@@ -461,7 +468,7 @@ int main(int argc, char *argv[])
     canvas = cv::Mat3b(frame.rows, frame.cols, cv::Vec3b(0,0,0));
     frame.copyTo(canvas);
 
-    BoundingBox fullframe({0, 0, 1024, 576});
+    BoundingBox fullframe({0, 0, (float)frame.cols, (float)frame.rows});
 
     while (true)
     {
@@ -470,13 +477,14 @@ int main(int argc, char *argv[])
         if (toogleplay && !paused)
         {
             if (currframe + 1 < frames.size()) currframe++;
-            printf("Frame:  %d\n", currframe);
             frame.copyTo(canvas);
             nextframe = true;
         }
         if (selected && nextframe)
         {
+            printf("Frame:  %d\n", currframe);
             if (toggletracking) tracker->Track(frame, regressor, &_bbox);
+            else _bbox = unstaged[currframe];
             nextframe = false;
             _bbox.Draw(255,0,0,&canvas);
             unstaged[currframe] = _bbox;
