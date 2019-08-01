@@ -42,6 +42,8 @@ std::string outputdir = "";
 
 int waitkeyduration = 1;
 
+bool toggletracking = true;
+
 bool fileAccessible(std::string filename)
 {
     std::ifstream file(filename);
@@ -88,15 +90,16 @@ int saveVideo()
             return 1;
         }
     }
-    std::ofstream annotations(outputdir + "annotations.ann");
+    std::string annotationsfile = outputdir + "annotations" + std::to_string(firstframe) + "-" + std::to_string(lastframe) + ".ann";
+    std::ofstream annotations(annotationsfile);
     int count = 1;
     for (int i = firstframe; i < lastframe; i++)
     {
         annotations << count << " "
-            << staged[i].x1_ << " " << staged[i].y1_ << " "
-            << staged[i].x2_ << " " << staged[i].y1_ << " "
-            << staged[i].x1_ << " " << staged[i].y2_ << " "
-            << staged[i].x2_ << " " << staged[i].y2_ << std::endl;
+            << staged[i].x1_ + 1 << " " << staged[i].y1_ + 1 << " "
+            << staged[i].x2_ + 1 << " " << staged[i].y1_ + 1 << " "
+            << staged[i].x1_ + 1 << " " << staged[i].y2_ + 1 << " "
+            << staged[i].x2_ + 1 << " " << staged[i].y2_ + 1 << std::endl;
         std::ostringstream path;
         path << outputdir;
         path << std::setfill('0') << std::setw(8) << count;
@@ -106,9 +109,52 @@ int saveVideo()
         count++;
     }
     annotations.close();
-    std::ofstream beginend(outputdir + "beginend.txt");
-    beginend << firstframe << " " <<lastframe << std::endl;
-    beginend.close();
+
+    printf("Annotations saved to %s\n", annotationsfile.c_str());
+
+    return 0;
+}
+
+int loadAnnotations(std::string inputannotations)
+{
+    std::ifstream annotations(inputannotations);
+
+    if (!annotations.good())
+    {
+        printf("Annotations file not available\n");
+        return 1;
+    }
+
+    int currid = firstframe;
+    int prevannid = -1;
+
+    int annid;
+    double Ax, Ay, Bx, By, Cx, Cy, Dx, Dy;
+
+    while (currid < lastframe)
+    {
+        if (annotations >> annid >> Ax >> Ay >> Bx >> By >> Cx >> Cy >> Dx >> Dy)
+        {
+            printf("%d %f %f %f %f %f %f %f %f\n", annid, Ax, Ay, Bx, By, Cx, Cy, Dx, Dy);
+            if (prevannid == -1) currid = firstframe;
+            else
+            {
+                int step = annid - prevannid;
+                currid += step;
+                prevannid = annid;
+            }
+            staged[currid].x1_ = std::min(Ax, std::min(Bx, std::min(Cx, Dx))) - 1;
+            staged[currid].y1_ = std::min(Ay, std::min(By, std::min(Cy, Dy))) - 1;
+            staged[currid].x2_ = std::max(Ax, std::max(Bx, std::max(Cx, Dx))) - 1;
+            staged[currid].y2_ = std::max(Ay, std::max(By, std::max(Cy, Dy))) - 1;
+        }
+        else
+        {
+            printf("Finished loading annotations\n");
+            annotations.close();
+            return 0;
+        }
+    }
     return 0;
 }
 
@@ -168,14 +214,14 @@ bool keyboardControl(int key)
     case 106: // J - move backwards
         if (paused)
         {
-            currframe--;
+            if (currframe > 0) currframe--;
             nextframe = true;
         }
         break;
     case 107: // K - move forward
         if (paused)
         {
-            currframe++;
+            if (currframe < frames.size()) currframe++;
             nextframe = true;
         }
         break;
@@ -225,9 +271,19 @@ bool keyboardControl(int key)
         if (waitkeyduration > 1) waitkeyduration /= 2;
         printf("Time for frame:  %dms\n", waitkeyduration);
         break;
+    case 105: // I - initialize with current unstaged
+        tracker->Init(frame, unstaged[currframe], regressor);
+        break;
+    case 111: // O - initialize with current staged
+        tracker->Init(frame, staged[currframe], regressor);
+        break;
     case 45: // - - slow down two times
         waitkeyduration *= 2;
         printf("Time for frame:  %dms\n", waitkeyduration);
+        break;
+    case 113: // Q - toggle tracker usage
+        toggletracking = !toggletracking;
+        printf("Tracking turned %s\n", toggletracking ? "on" : "off");
         break;
     }
     return true;
@@ -242,12 +298,15 @@ int main(int argc, char *argv[])
 {
     cxxopts::Options options("Dataset creator tool", "Tool for creating bounding boxes for objects in video frames for the tracking tasks, classification tasks (within bounding boxes) and detection tasks (single object per image)");
 
+    std::string inputannotations;
+
     options.add_options()
         ("input-video", "Input video to extract labels from", cxxopts::value(videoname))
         ("frames-directory", "The directory containing frames from input video", cxxopts::value(framesdir))
         ("output-directory", "The directory containing labeled frames and annotations", cxxopts::value(outputdir))
         ("first-frame", "The id of the first frame (0-based)", cxxopts::value(firstframe))
         ("last-frame", "The id of the last frame (0-based)", cxxopts::value(lastframe))
+        ("input-annotations", "Input .ann file containing the annotations from frames from first-frame to last-frame", cxxopts::value(inputannotations))
         ("h,help", "Prints help for the application")
     ;
 
@@ -268,6 +327,15 @@ int main(int argc, char *argv[])
 
     if (framesdir[framesdir.size() - 1] != '/') framesdir += "/";
     if (outputdir[outputdir.size() - 1] != '/') framesdir += "/";
+
+    if (inputannotations != "")
+    {
+        if (loadAnnotations(inputannotations) != 0)
+        {
+            printf("Error loading annotations file\n");
+            return 1;
+        }
+    }
 
     printf("Starting program...\n");
 
@@ -384,7 +452,7 @@ int main(int argc, char *argv[])
         }
         if (selected && nextframe)
         {
-            tracker->Track(frame, regressor, &_bbox);
+            if (toggletracking) tracker->Track(frame, regressor, &_bbox);
             nextframe = false;
             _bbox.Draw(255,0,0,&canvas);
             unstaged[currframe] = _bbox;
