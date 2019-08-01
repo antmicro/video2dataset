@@ -115,6 +115,25 @@ int saveVideo()
     return 0;
 }
 
+void interpolateStagedFrames(int from, int to)
+{
+    printf("Interpolating from %d to %d\n", from, to);
+    if (!(from < to && to - from > 1))
+        return;
+    double stepx1 = (staged[to].x1_ - staged[from].x1_) / (double(to-from));
+    double stepx2 = (staged[to].x2_ - staged[from].x2_) / (double(to-from));
+    double stepy1 = (staged[to].y1_ - staged[from].y1_) / (double(to-from));
+    double stepy2 = (staged[to].y2_ - staged[from].y2_) / (double(to-from));
+
+    for (int i = from + 1; i < to; i++)
+    {
+        staged[i].x1_ = staged[from].x1_ + (i - from) * stepx1;
+        staged[i].x2_ = staged[from].x2_ + (i - from) * stepx2;
+        staged[i].y1_ = staged[from].y1_ + (i - from) * stepy1;
+        staged[i].y2_ = staged[from].y2_ + (i - from) * stepy2;
+    }
+}
+
 int loadAnnotations(std::string inputannotations)
 {
     std::ifstream annotations(inputannotations);
@@ -126,13 +145,16 @@ int loadAnnotations(std::string inputannotations)
     }
 
     int currid = firstframe;
+    int previd = firstframe;
     int prevannid = -1;
 
     int annid;
+    int step = 1;
     double Ax, Ay, Bx, By, Cx, Cy, Dx, Dy;
 
     while (currid < lastframe)
     {
+        printf("Processing frame %d\n", currid);
         if (annotations >> annid >> Ax >> Ay >> Bx >> By >> Cx >> Cy >> Dx >> Dy)
         {
             printf("%d %f %f %f %f %f %f %f %f\n", annid, Ax, Ay, Bx, By, Cx, Cy, Dx, Dy);
@@ -141,12 +163,14 @@ int loadAnnotations(std::string inputannotations)
             {
                 int step = annid - prevannid;
                 currid += step;
-                prevannid = annid;
             }
             staged[currid].x1_ = std::min(Ax, std::min(Bx, std::min(Cx, Dx))) - 1;
             staged[currid].y1_ = std::min(Ay, std::min(By, std::min(Cy, Dy))) - 1;
             staged[currid].x2_ = std::max(Ax, std::max(Bx, std::max(Cx, Dx))) - 1;
             staged[currid].y2_ = std::max(Ay, std::max(By, std::max(Cy, Dy))) - 1;
+            if (currid - previd > 1) interpolateStagedFrames(previd, currid);
+            previd = currid;
+            prevannid = annid;
         }
         else
         {
