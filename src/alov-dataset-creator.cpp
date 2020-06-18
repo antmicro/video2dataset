@@ -315,6 +315,29 @@ bool keyboardControl(int key)
     case 42: // * - move to last frame
         currframe = lastframe;
         break;
+    case 104: // H - show help
+        printf("\n=============================================================\n");
+        printf("H     - help\n");
+        printf("ESC   - quit\n");
+        printf("SPACE - toggle pause/play\n");
+        printf("J     - move backwards\n");
+        printf("K     - move forward\n");
+        printf("1     - stage single\n");
+        printf("A     - stage all unstaged\n");
+        printf("C     - toggle continuos staging\n");
+        printf("2     - reset single\n");
+        printf("R     - reset all unstaged to staged\n");
+        printf("S     - save the annotations\n");
+        printf("(     - set frame as the beginning\n");
+        printf(")     - set frame as the ending\n");
+        printf("+     - speed up movie two times (up to 1x speed\n");
+        printf("-     - slow down move two times\n");
+        printf("I     - initialize tracker with current unstaged bounding box\n");
+        printf("O     - initialize tracker with current staged bounding box\n");
+        printf("Q     - toggle tracker usage\n");
+        printf("&     - go to the first frame\n");
+        printf("*     - go to the last frame\n");
+        printf("=============================================================\n");
     }
     return true;
 }
