@@ -456,7 +456,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (lastframe == -1) lastframe = frames.size();
+    if (lastframe == -1) lastframe = frames.size() - 1;
 
     caffe::Caffe::SetDevice(0);
     caffe::Caffe::set_mode(caffe::Caffe::GPU);
