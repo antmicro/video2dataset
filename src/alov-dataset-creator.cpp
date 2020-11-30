@@ -369,6 +369,7 @@ int main(int argc, char *argv[])
     ;
 
     options.parse_positional({"frames-directory", "output-directory"});
+    options.positional_help("FRAMES_DIRECTORY OUTPUT_DIRECTORY");
 
     auto result = options.parse(argc, argv);
 
