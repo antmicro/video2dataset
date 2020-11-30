@@ -1,0 +1,3 @@
+[submodule "third-party/GOTURN"]
+	path = third-party/GOTURN
+	url = git@github.com:davheld/GOTURN.git
