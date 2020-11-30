@@ -40,6 +40,9 @@ std::string videoname = "";
 std::string framesdir = "";
 std::string outputdir = "";
 
+std::string prototxt = "../nets/tracker.prototxt";
+std::string caffemodel = "../nets/tracker.caffemodel";
+
 int waitkeyduration = 1;
 
 bool toggletracking = true;
@@ -360,6 +363,8 @@ int main(int argc, char *argv[])
         ("first-frame", "The id of the first frame (0-based)", cxxopts::value(firstframe))
         ("last-frame", "The id of the last frame (0-based)", cxxopts::value(lastframe))
         ("input-annotations", "Input .ann file containing the annotations from frames from first-frame to last-frame", cxxopts::value(inputannotations))
+        ("prototxt-path", "Path to the .prototxt file", cxxopts::value(prototxt))
+        ("caffemodel-path", "Path to the .caffemodel file", cxxopts::value(caffemodel))
         ("h,help", "Prints help for the application")
     ;
 
@@ -462,7 +467,7 @@ int main(int argc, char *argv[])
     caffe::Caffe::set_mode(caffe::Caffe::GPU);
     printf("Set GPU Caffe mode\n");
     tracker = new Tracker(false);
-    regressor = new Regressor("../nets/tracker.prototxt", "../nets/models/pretrained_model/tracker.caffemodel", 0, false);
+    regressor = new Regressor(prototxt, caffemodel, 0, false);
     printf("Prepared tracker structures\n");
     toogleplay = true;
     selected = false;
