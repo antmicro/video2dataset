@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include <fstream>
 #include <algorithm>
+#include <memory>
 
 cv::Mat3b canvas;
 bool toogleplay;
@@ -21,8 +22,8 @@ bool nextframe = false;
 bool manual = false;
 bool autostage = false;
 
-Tracker *tracker;
-Regressor *regressor;
+std::unique_ptr<Tracker> tracker = nullptr;
+std::unique_ptr<Regressor> regressor = nullptr;
 
 BoundingBox _bbox;
 
@@ -221,7 +222,7 @@ void callbackfunc(int event, int x, int y, int flags, void* userdata)
         _bbox.x2_ = bbox[2];
         _bbox.y2_ = bbox[3];
         printf("Initializing tracking... ");
-        tracker->Init(frame, _bbox, regressor);
+        tracker->Init(frame, _bbox, regressor.get());
         printf("Initialized.\n");
         toogleplay = true;
         selected = true;
@@ -272,7 +273,7 @@ bool keyboardControl(int key)
         if (paused)
         {
             unstaged[currframe] = staged[currframe];
-            tracker->Init(frame, staged[currframe], regressor);
+            tracker->Init(frame, staged[currframe], regressor.get());
         }
         break;
     case 114: // R - set all unstaged to stage (reset)
@@ -282,7 +283,7 @@ bool keyboardControl(int key)
             {
                 unstaged[i] = staged[i];
             }
-            tracker->Init(frame, staged[currframe], regressor);
+            tracker->Init(frame, staged[currframe], regressor.get());
         }
         break;
     case 115: // S - save the annotations
@@ -299,10 +300,10 @@ bool keyboardControl(int key)
         printf("Time for frame:  %dms\n", waitkeyduration);
         break;
     case 105: // I - initialize with current unstaged
-        tracker->Init(frame, unstaged[currframe], regressor);
+        tracker->Init(frame, unstaged[currframe], regressor.get());
         break;
     case 111: // O - initialize with current staged
-        tracker->Init(frame, staged[currframe], regressor);
+        tracker->Init(frame, staged[currframe], regressor.get());
         break;
     case 45: // - - slow down two times
         waitkeyduration *= 2;
@@ -467,8 +468,8 @@ int main(int argc, char *argv[])
     caffe::Caffe::SetDevice(0);
     caffe::Caffe::set_mode(caffe::Caffe::GPU);
     printf("Set GPU Caffe mode\n");
-    tracker = new Tracker(false);
-    regressor = new Regressor(prototxt, caffemodel, 0, false);
+    tracker = std::unique_ptr<Tracker>(new Tracker(false));
+    regressor = std::unique_ptr<Regressor>(new Regressor(prototxt, caffemodel, 0, false));
     printf("Prepared tracker structures\n");
     toogleplay = true;
     selected = false;
@@ -512,7 +513,7 @@ int main(int argc, char *argv[])
         if (selected && nextframe)
         {
             printf("Frame:  %d\n", currframe);
-            if (toggletracking) tracker->Track(frame, regressor, &_bbox);
+            if (toggletracking) tracker->Track(frame, regressor.get(), &_bbox);
             else _bbox = unstaged[currframe];
             nextframe = false;
             _bbox.Draw(255,0,0,&canvas);
@@ -528,7 +529,8 @@ int main(int argc, char *argv[])
         cv::imshow("Frame", canvas);
         if (!keyboardControl(cv::waitKey(waitkeyduration))) break;
     }
-    delete tracker;
-    delete regressor;
+    // need to release regressor and tracker before CUDA context is out of scope
+    regressor.release();
+    tracker.release();
     return 0;
 }
