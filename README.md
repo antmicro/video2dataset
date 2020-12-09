@@ -1,6 +1,6 @@
 # ALOV dataset creator from video sequences with GOTURN aiding
 
-This repository contains a tool for annotating videos for single object detection and tracking and converting the videos and annotations into ALOV dataset format.
+This repository contains a tool for annotating videos for single object detection and tracking and converting the videos and annotations into the ALOV dataset format.
 The consecutive bounding boxes are proposed by the GOTURN tracker.
 
 ## Requirements
@@ -42,17 +42,17 @@ After the GOTURN model loads, the GUI with the first frame will appear.
 
 The GUI is as follows:
 
-- green border of the window means the frame is the first in sequence for the ALOV dataset sequence,
-- blue border of the window means the frome is the last in sequence for the ALOV dataset sequence,
-- red bounding box means unstaged bounding box for the current frame,
-- white bounding box means staged bounding box for the current frame (this bounding box will be saved).
+- green border of the window means the frame is first in the sequence for the ALOV dataset sequence,
+- blue border of the window means the frame is last in the sequence for the ALOV dataset sequence,
+- red bounding box denotes unstaged bounding box for the current frame,
+- white bounding box denotes staged bounding box for the current frame (this bounding box will be saved).
 
 Controls for GUI:
 
-- `H` - displays help for GUI in the terminal with available key controls,
-- `ESC` - quits the application without saving,
-- `SPACE` - toggles pause/playing,
-- `J` - move one frame backward,
+- `H` - display help for GUI in the terminal with available key controls,
+- `ESC` - quit the application without saving,
+- `SPACE` - toggle pause/playing,
+- `J` - move one frame back,
 - `K` - move one frame forward,
 - `1` - stage unstaged (red) bounding box in the current frame,
 - `A` - stage all unstaged bounding boxes,
@@ -70,11 +70,11 @@ Controls for GUI:
 - `&` - go to the first frame,
 - `*` - go to the last frame.
 
-In the beginning, select the object to track with mouse - the first bounding box will be marked as unstaged (red bounding box).
-After this, press `SPACE` to automatically track the object with GOTURN tracker.
+At the beginning, select the object to track with a mouse - the first bounding box will be marked as unstaged (red bounding box).
+Next, press `SPACE` to automatically track the object with the GOTURN tracker.
 To pause, press `SPACE`.
 You can use `J` and `K` to move across frames.
-You can change the bounding box by re-selecting the bounding box with the mouse.
+You can change the bounding box by re-selecting the bounding box with a mouse.
 This will automatically reinitialize the tracker for the current frame.
 To temporarily turn off the tracker (this will stop bounding box proposals and reinitialization), press `Q`.
 
@@ -93,5 +93,5 @@ To review the annotations files for a given `dataset-dir/annotations<first-frame
 
 ## Licensing
 
-The sources are published under Apache 2.0 License, except for files located in the `third-party/` directory.
+The sources are published under the Apache 2.0 License, except for files located in the `third-party/` directory.
 For those files the license is either enclosed in the file header or in a separate LICENSE file.
