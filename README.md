@@ -5,7 +5,7 @@ The consecutive bounding boxes are proposed by the GOTURN tracker.
 
 ## Requirements
 
-Follow the requirements in the [GOTURN install dependencies](https://github.com/davheld/GOTURN#install-dependencies).
+Follow the requirements in the [GOTURN to install dependencies](https://github.com/davheld/GOTURN#install-dependencies).
 
 ## Building
 
