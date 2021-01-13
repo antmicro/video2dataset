@@ -1,5 +1,7 @@
 # ALOV dataset creator from video sequences with GOTURN aiding
 
+Copyright (c) 2020-2021 [Antmicro](https://www.antmicro.com)
+
 This repository contains a tool for annotating videos for single object detection and tracking and converting the videos and annotations into the ALOV dataset format.
 The consecutive bounding boxes are proposed by the GOTURN tracker.
 
