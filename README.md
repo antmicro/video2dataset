@@ -5,6 +5,54 @@ Copyright (c) 2020-2021 [Antmicro](https://www.antmicro.com)
 This repository contains a tool for annotating videos for single object detection and tracking and converting the videos and annotations into the [ALOV dataset](http://alov300pp.joomlafree.it/dataset-resources.html) format.
 The consecutive bounding boxes are proposed by the GOTURN tracker.
 
+## ALOV dataset structure
+
+The sample dataset directory structure is following:
+
+* `dataset root`:
+    * `sequence-1`
+        * `00000001.jpg`
+        * `00000002.jpg`
+        * `00000003.jpg`
+        * `00000004.jpg`
+        * `00000005.jpg`
+        * `00000006.jpg`
+        * `...`
+        * `annotations.ann`
+    * `sequence-2`
+        * `00000001.jpg`
+        * `00000002.jpg`
+        * `00000003.jpg`
+        * `...`
+        * `annotations.ann`
+    * `sequence-3`
+        * `00000001.jpg`
+        * `00000002.jpg`
+        * `...`
+        * `annotations.ann`
+    * `...`
+
+Each `sequence-X` directory represents single video sequence with the tracked object.
+The object should be present in all of the frames.
+Each frame in the sequence is stored in a separate file.
+
+The `annotations.ann` file contains the annotations.
+Each defined bounding box is represented by a single line in the `annotations.ann` file.
+
+For bounding box with following points:
+
+    A--------B
+    |        |
+    |        |
+    C--------D
+
+The format of the bounding box definition is following:
+
+    <image-id> <Ax> <Ay> <Bx> <By> <Cx> <Cy> <Dx> <Dy>
+
+Where `<image-id>` is the ID of the frame (indexing starts from 1) for a given sequence.
+The coordinates are floating points that are coordinates in the image (not normalized, these are the pixel coordinates in a given frame, starting from top-left corner).
+
 ## Requirements
 
 Follow the requirements in the [GOTURN to install dependencies](https://github.com/davheld/GOTURN#install-dependencies).
