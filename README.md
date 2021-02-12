@@ -39,19 +39,16 @@ Each frame in the sequence is stored in a separate file.
 The `annotations.ann` file contains the annotations.
 Each defined bounding box is represented by a single line in the `annotations.ann` file.
 
-For bounding box with following points:
-
-    A--------B
-    |        |
-    |        |
-    C--------D
-
 The format of the bounding box definition is following:
 
     <image-id> <Ax> <Ay> <Bx> <By> <Cx> <Cy> <Dx> <Dy>
 
 Where `<image-id>` is the ID of the frame (indexing starts from 1) for a given sequence.
 The coordinates are floating points that are coordinates in the image (not normalized, these are the pixel coordinates in a given frame, starting from top-left corner).
+
+The order of `A`, `B`, `C`, `D` points is presented in [Usage section](#usage).
+
+The sample dataset with ALOV sequences can be found in the [sample-dataset directory](sample-dataset/).
 
 ## Requirements
 
@@ -89,6 +86,8 @@ This will extract frames from `video-file.mp4` and save them as JPG files.
 If the frames are already available as JPG, the `--input-video` flag can be omitted.
 
 After the GOTURN model loads, the GUI with the first frame will appear.
+
+![](img/alov-dataset-creator-bboxes.png)
 
 The GUI is as follows:
 
@@ -140,6 +139,10 @@ After saving the annotations, close the application by pressing `ESC`.
 To review the annotations files for a given `dataset-dir/annotations<first-frame-id>-<last-frame-id>.ann`, run:
 
     ./alov-dataset-creator dataset-dir/ --first-frame <first-frame-id> --last-frame <last-frame-id> --input-annotations dataset-dir/annotations<first-frame-id>-<last-frame-id>.ann
+
+## Demo
+
+![](img/dataset-creator.gif)
 
 ## Licensing
 
