@@ -144,6 +144,70 @@ To review the annotations files for a given `dataset-dir/annotations<first-frame
 
 ![](img/dataset-creator.gif)
 
+## Conversion tools
+
+The [converters/ directory](converters/) contains tools for converting the ALOV-format datasets to another datasets.
+
+### Converting dataset sequences to detection dataset
+
+[alov_to_yolo_dataset.py script](converters/alov_to_yolo_dataset.py) creates detection dataset from the tracking dataset sequences.
+
+In addition to generated dataset in ALOV-format, the script requires a `sequence_object_classes` file describing what is the class of the object in each video sequence.
+For each used sequence from the tracking dataset there is a separate line in the file in format:
+
+    <sequence-directory-name> <class-name>
+
+For example, for the [sample-dataset](sample-dataset/) there is only one sequence, where the tracked object is of class `dog`.
+The `sequence_object_classes.txt` file may look as follows:
+
+    sequence-1 dog
+
+To generate a detection dataset in format acceptable in training YOLO detectors (from the [Darknet framework](https://github.com/AlexeyAB/darknet)), run:
+
+    python converters/alov_to_yolo_dataset.py ./sample-dataset ./sequence_object_classes.txt ./detection-dataset --use-every 10 --train-frames-percentage 0.4 --validation-frames-percentage 0.1 --seed 12345
+
+In the above command:
+
+* `./sample-dataset` is the path to the project's sample dataset
+* `./sequence_object_classes.txt` is the file with sequence-to-class mapping
+* `./detection-dataset` is the path where the output detection dataset will be stored
+* `--use-every 10` means that instead of using all frames from each sequence, only every 10-th frame will be used (useful when the number of similar frames should be reduced),
+* `--seed 12345` means all selected images from sequences will be shuffled with the given seed,
+* `--train-frames-percentage 0.4` means that 40% of shuffled images from sequences will be used to form train dataset
+* `--validation-frames-percentage 0.1` means that 10% of shuffled images from sequences will be used to form validation dataset (the images used for train dataset will not be used here).
+
+The `detection-dataset` will look as follows:
+
+    new-dataset/
+    ├── backup
+    ├── data
+    │   ├── train
+    │   │   ├── 00000000.jpg
+    │   │   ├── 00000000.txt
+    │   │   ├── 00000001.jpg
+    │   │   ├── 00000001.txt
+    │   │   ├── 00000002.jpg
+    │   │   ├── 00000002.txt
+    │   │   └── ...
+    │   └── valid
+    │       ├── 00000003.jpg
+    │       ├── 00000003.txt
+    │       ├── 00000004.jpg
+    │       ├── 00000004.txt
+    │       └── ...
+    ├── data.data
+    ├── data.names
+    ├── test.txt
+    └── train.txt
+
+`data` directory contains images along with `txt` files with YOLO-like annotations of bounding boxes.
+`data.names` has list of class names (the order in this file reflects the ID of the class in the `txt` files, starting from 0).
+`test.txt` is a list of files in `data/valid`, and the `train.txt` is a list of files in `data/train`.
+
+For more configuration options and details on the script, run:
+
+    python3 converters/alov_to_yolo_dataset.py -h
+
 ## Licensing
 
 The sources are published under the Apache 2.0 License, except for files located in the `third-party/` directory.
